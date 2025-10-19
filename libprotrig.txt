@@ -7,7 +7,7 @@ BEGIN
 
     SELECT book_id, borrow_date, return_date INTO bookid, borrowdate, returndate FROM Borrows WHERE member_id = userID;
 
-    SELECT fine_id, amount, status INTO fine_id, amount, status FROM Fines WHERE member_id = userID;
+    SELECT fine_id, amount, status,FineDate INTO fine_id, amount, status FROM Fines WHERE member_id = userID;
 END //
 
 

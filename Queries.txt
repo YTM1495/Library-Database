@@ -1,0 +1,85 @@
+CREATE TABLE Author (
+    author_id      INT PRIMARY KEY,
+    author_name    VARCHAR(100) NOT NULL,
+    author_genre   VARCHAR(50),
+    author_details TEXT,
+    awards         TEXT
+);
+CREATE TABLE Publisher (
+    publisher_code   INT PRIMARY KEY,
+    publisher_name   VARCHAR(100) NOT NULL,
+    publisher_details TEXT
+);
+CREATE TABLE Library (
+    license_no   INT PRIMARY KEY,
+    library_name VARCHAR(100) NOT NULL,
+    contact_no   VARCHAR(20)
+);
+
+CREATE TABLE Librarian (
+    librarian_id   INT PRIMARY KEY,
+    librarian_name VARCHAR(100) NOT NULL,
+    designation    VARCHAR(50),
+    contact_no     VARCHAR(20),
+    license_no     INT,
+    FOREIGN KEY (license_no) REFERENCES Library(license_no)
+);
+CREATE TABLE Books (
+    book_id      INT PRIMARY KEY,
+    book_name    VARCHAR(150) NOT NULL,
+    book_price   DECIMAL(10,2),
+    book_status  VARCHAR(20),
+    publish_date DATE,
+    publisher_code INT,
+    FOREIGN KEY (publisher_code) REFERENCES Publisher(publisher_code)
+);
+
+
+CREATE TABLE Fine (
+    fine_id  INT PRIMARY KEY,
+    amount   DECIMAL(10,2),
+    status   VARCHAR(20),
+    member_id INT,
+    FOREIGN KEY (member_id) REFERENCES Member(member_id)
+);
+CREATE TABLE WrittenBy (
+    book_id   INT,
+    author_id INT,
+    PRIMARY KEY (book_id, author_id),
+    FOREIGN KEY (book_id) REFERENCES Books(book_id),
+    FOREIGN KEY (author_id) REFERENCES Author(author_id)
+);
+
+CREATE TABLE LibraryBooks (
+    license_no INT,
+    book_id    INT,
+    PRIMARY KEY (license_no, book_id),
+    FOREIGN KEY (license_no) REFERENCES Library(license_no),
+    FOREIGN KEY (book_id) REFERENCES Books(book_id)
+);
+
+CREATE TABLE IssuedBy (
+    librarian_id INT,
+    book_id      INT,
+    PRIMARY KEY (librarian_id, book_id),
+    FOREIGN KEY (librarian_id) REFERENCES Librarian(librarian_id),
+    FOREIGN KEY (book_id) REFERENCES Books(book_id)
+);
+
+CREATE TABLE Borrows (
+    member_id INT,
+    book_id   INT,
+    borrow_date DATE,
+    return_date DATE,
+    PRIMARY KEY (member_id, book_id, borrow_date),
+    FOREIGN KEY (member_id) REFERENCES Member(member_id),
+    FOREIGN KEY (book_id) REFERENCES Books(book_id)
+);
+
+CREATE TABLE ManagesFine (
+    librarian_id INT,
+    fine_id      INT,
+    PRIMARY KEY (librarian_id, fine_id),
+    FOREIGN KEY (librarian_id) REFERENCES Librarian(librarian_id),
+    FOREIGN KEY (fine_id) REFERENCES Fine(fine_id)
+);
