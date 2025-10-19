@@ -1,0 +1,138 @@
+DELIMITER //
+CREATE PROCEDURE display_member(
+    IN userID INT,IN password VARCHAR(20),OUT name VARCHAR(20),OUT address VARCHAR(20),OUT contactno INT,    OUT membertype VARCHAR(20),OUT bookid INT,OUT borrowdate DATETIME,OUT returndate DATETIME,OUT fine_id INT, OUT amount DECIMAL(10,2),OUT status VARCHAR(20)
+)
+BEGIN
+    SELECT name, address, contact_no, member_type INTO name, address, contactno, membertype FROM Members WHERE member_id = userID;
+
+    SELECT book_id, borrow_date, return_date INTO bookid, borrowdate, returndate FROM Borrows WHERE member_id = userID;
+
+    SELECT fine_id, amount, status INTO fine_id, amount, status FROM Fines WHERE member_id = userID;
+END //
+
+
+CREATE PROCEDURE display_librarian(IN userID INT, IN password VARCHAR(20),OUT book_id INT,OUT book_name VARCHAR(20),OUT book_price DECIMAL(10,2),OUT book_status VARCHAR(20), OUT publish_date DATETIME,OUT publisher_code INT, OUT name VARCHAR(20),OUT address VARCHAR(20),OUT contactno INT,OUT membertype VARCHAR(20))
+BEGIN 
+    SELECT book_id INTO book_id FROM IssuedBy WHERE librarian_id = userID;
+    SELECT book_name, book_price, book_status, publish_date, publisher_code INTO book_name, book_price, book_status, publish_date, publisher_code FROM Books WHERE book_id = book_id;
+    SELECT member_id INTO member_id FROM Fines WHERE fine_id = fine_id;
+
+    SELECT name, address, contact_no, member_type INTO name, address, contactno, membertype FROM Members WHERE member_id = member_id;
+END //
+
+
+CREATE PROCEDURE new_member(
+    IN name_new VARCHAR(20),IN address_new VARCHAR(20), IN contactNO_new INT, IN member_type_new VARCHAR(20))
+BEGIN
+    INSERT INTO Members (name, address, contact_no, member_type) VALUES (name_new, address_new, contactNO_new, member_type_new);
+END //
+
+CREATE PROCEDURE remove_member()
+BEGIN 
+    DELETE FROM Members WHERE member_id IN (SELECT member_id FROM Fines
+        WHERE fine_date < DATE_SUB(CURDATE(), INTERVAL 1 MONTH));
+END //
+
+
+CREATE PROCEDURE add_book(IN book_name_new VARCHAR(20), IN book_price_new DECIMAL(10,2), IN book_status_new VARCHAR(20), IN publish_date_new DATETIME, IN publisher_code_new INT)
+BEGIN
+    INSERT INTO Books (book_name, book_price, book_status, publish_date, publisher_code)VALUES (book_name_new, book_price_new, book_status_new, publish_date_new, publisher_code_new);
+END //
+
+
+CREATE PROCEDURE display_books()
+BEGIN 
+    SELECT * FROM Books;
+END //
+
+
+CREATE PROCEDURE take_book(IN bookname VARCHAR(20), IN authorname VARCHAR(20),IN librarianid INT, IN memberid INT)
+BEGIN
+    DECLARE count_var INT;
+    SELECT book_count INTO count_var FROM Books WHERE book_name = bookname AND author_name = authorname;
+    IF count_var <= 0 THEN
+        SELECT 'Book Out Of Stock!!!' AS message;
+    ELSE
+        UPDATE Books
+        SET book_count = book_count - 1
+        WHERE book_name = bookname AND author_name = authorname;
+
+        SELECT 'Book count updated successfully!' AS message;
+
+        INSERT INTO IssuedBy (librarian_id, book_id)VALUES (librarianid, (SELECT book_id FROM Books WHERE book_name = bookname AND author_name = authorname));
+
+        INSERT INTO Borrows (member_id, book_id, borrow_date)VALUES (memberid, (SELECT book_id FROM Books WHERE book_name = bookname AND author_name = authorname), NOW());
+    END IF;
+END //
+
+
+CREATE PROCEDURE chk_fine()
+BEGIN
+    INSERT INTO Fines (member_id, borrow_id, amount, status, fine_date)
+    SELECT b.member_id, b.borrow_id, 50, 'Unpaid', CURDATE()
+    FROM Borrows b
+    WHERE DATEDIFF(CURDATE(), b.borrow_date) > 30
+      AND b.borrow_id NOT IN (SELECT borrow_id FROM Fines);
+END //
+
+
+CREATE PROCEDURE return_book(IN memberid INT, IN bookid INT)
+BEGIN
+    UPDATE Borrows
+    SET return_date = CURDATE()  WHERE member_id = memberid AND book_id = bookid;
+    UPDATE Books
+    SET book_count = book_count + 1  WHERE book_id = bookid;
+
+    SELECT 'Book Returned Successfully!' AS message;
+END //
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE pay_fine(IN memberid INT, IN fine_id INT)
+BEGIN
+    UPDATE Fines
+    SET status = 'Paid' WHERE member_id = memberid AND fine_id = fine_id;
+
+    SELECT 'Fine Payment Successful!' AS message;
+END //
+
+
+CREATE PROCEDURE display_fines()
+BEGIN
+    SELECT fine_id, member_id, amount, fine_date, status FROM Fines WHERE status = 'Unpaid';
+END //
+
+
+CREATE TRIGGER auto_fine_after_return
+AFTER UPDATE ON Borrows
+FOR EACH ROW
+BEGIN
+    IF (NEW.return_date IS NOT NULL) AND (DATEDIFF(NEW.return_date, NEW.borrow_date) > 30) THEN
+        INSERT INTO Fines (member_id, borrow_id, amount, status, fine_date) VALUES (NEW.member_id, NEW.borrow_id, 50, 'Unpaid', CURDATE());
+    END IF;
+END //
+
+
+CREATE TRIGGER after_borrow_insert
+AFTER INSERT ON Borrows
+FOR EACH ROW
+BEGIN
+    UPDATE Books
+    SET book_count = book_count - 1 WHERE book_id = NEW.book_id;
+END //
+
+
+CREATE TRIGGER after_return_update
+AFTER UPDATE ON Borrows
+FOR EACH ROW
+BEGIN
+    IF OLD.return_date IS NULL AND NEW.return_date IS NOT NULL THEN
+        UPDATE Books
+        SET book_count = book_count + 1 WHERE book_id = NEW.book_id;
+    END IF;
+END //
+
+DELIMITER ;
+
