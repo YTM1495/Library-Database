@@ -1,6 +1,4 @@
----TABLE CREATION QUERIES---
-
-CREATE TABLE Author (
+CREATE TABLE IF NOT EXISTS Author (
     author_id      INT PRIMARY KEY,
     author_name    VARCHAR(100) NOT NULL,
     author_genre   VARCHAR(50),
@@ -8,13 +6,13 @@ CREATE TABLE Author (
     awards         TEXT
 );
 
-CREATE TABLE Publisher (
+CREATE TABLE  IF NOT EXISTS Publisher(
     publisher_code   INT PRIMARY KEY,
     publisher_name   VARCHAR(100) NOT NULL,
     publisher_details TEXT
 );
 
-CREATE TABLE Books (
+CREATE TABLE   IF NOT EXISTS Books(
     book_id        INT PRIMARY KEY AUTO_INCREMENT,
     book_name      VARCHAR(150) NOT NULL,
     book_price     DECIMAL(10,2),
@@ -25,30 +23,32 @@ CREATE TABLE Books (
     FOREIGN KEY (publisher_code) REFERENCES Publisher(publisher_code)
 );
 
-CREATE TABLE Library (
+CREATE TABLE  IF NOT EXISTS Library (
     license_no   INT PRIMARY KEY,
     library_name VARCHAR(100) NOT NULL,
     contact_no   VARCHAR(20)
 );
 
-CREATE TABLE Librarian (
+CREATE TABLE   IF NOT EXISTS Librarian(
     librarian_id   INT PRIMARY KEY,
     librarian_name VARCHAR(100) NOT NULL,
     designation    VARCHAR(50),
     contact_no     VARCHAR(20),
+    password VARCHAR(20),
     license_no     INT,
     FOREIGN KEY (license_no) REFERENCES Library(license_no)
 );
 
-CREATE TABLE Member (
+CREATE TABLE   IF NOT EXISTS Member(
     member_id   INT PRIMARY KEY AUTO_INCREMENT,
     name        VARCHAR(100) NOT NULL,
     address     VARCHAR(200),
     contact_no  VARCHAR(20),
-    member_type VARCHAR(20)
+    member_type VARCHAR(20),
+    password VARCHAR(20)
 );
 
-CREATE TABLE Fine (
+CREATE TABLE  IF NOT EXISTS  Fine(
     fine_id   INT PRIMARY KEY AUTO_INCREMENT,
     amount    DECIMAL(10,2),
     status    VARCHAR(20),
@@ -57,7 +57,7 @@ CREATE TABLE Fine (
     FOREIGN KEY (member_id) REFERENCES Member(member_id)
 );
 
-CREATE TABLE WrittenBy (
+CREATE TABLE  IF NOT EXISTS  WrittenBy(
     book_id   INT,
     author_id INT,
     PRIMARY KEY (book_id, author_id),
@@ -66,7 +66,7 @@ CREATE TABLE WrittenBy (
 );
 
 
-CREATE TABLE IssuedBy (
+CREATE TABLE   IF NOT EXISTS IssuedBy(
     librarian_id INT,
     book_id      INT,
     PRIMARY KEY (librarian_id, book_id),
@@ -74,7 +74,7 @@ CREATE TABLE IssuedBy (
     FOREIGN KEY (book_id) REFERENCES Books(book_id)
 );
 
-CREATE TABLE Borrows (
+CREATE TABLE   IF NOT EXISTS Borrows(
     member_id    INT,
     book_id      INT,
     borrow_date  DATE,
@@ -84,7 +84,7 @@ CREATE TABLE Borrows (
     FOREIGN KEY (book_id) REFERENCES Books(book_id)
 );
 
-CREATE TABLE ManagesFine (
+CREATE TABLE   IF NOT EXISTS ManagesFine(
     librarian_id INT,
     fine_id      INT,
     PRIMARY KEY (librarian_id, fine_id),
@@ -92,9 +92,9 @@ CREATE TABLE ManagesFine (
     FOREIGN KEY (fine_id) REFERENCES Fine(fine_id)
 );
 
----INSERTION QUERIES---
 
-INSERT INTO Author (author_id, author_name, author_genre, author_details, awards) VALUES
+
+INSERT IGNORE INTO Author (author_id, author_name, author_genre, author_details, awards) VALUES
 (1, 'J.K. Rowling', 'Fantasy', 'British author, best known for the Harry Potter series.', 'Hugo Award'),
 (2, 'George Orwell', 'Dystopian', 'English novelist and essayist, journalist and critic.', 'Prometheus Hall of Fame Award'),
 (3, 'J.R.R. Tolkien', 'Fantasy', 'English writer, best known for The Hobbit and The Lord of the Rings.', 'International Fantasy Award'),
@@ -146,7 +146,7 @@ INSERT INTO Author (author_id, author_name, author_genre, author_details, awards
 (49, 'Gillian Flynn', 'Thriller', 'American author, known for Gone Girl.', 'None'),
 (50, 'Paulo Coelho', 'Fiction', 'Brazilian lyricist and novelist, known for The Alchemist.', 'None');
 
-INSERT INTO Publisher (publisher_code, publisher_name, publisher_details) VALUES
+INSERT IGNORE INTO Publisher (publisher_code, publisher_name, publisher_details) VALUES
 (1, 'Penguin Random House', 'Major book publishing company headquartered in New York City.'),
 (2, 'HarperCollins', 'American publishing company headquartered in New York City.'),
 (3, 'Macmillan Publishers', 'Global publishing company headquartered in London.'),
@@ -198,7 +198,7 @@ INSERT INTO Publisher (publisher_code, publisher_name, publisher_details) VALUES
 (49, 'Roli Books', 'Indian publishing house for history, culture, and lifestyle.'),
 (50, 'Juggernaut Books', 'Digital-first publishing platform and publisher in India.');
 
-INSERT INTO Books (book_name, book_price, book_status, publish_date, publisher_code, No_of_Stock) VALUES
+INSERT IGNORE INTO Books (book_name, book_price, book_status, publish_date, publisher_code, No_of_Stock) VALUES
 ('Harry Potter and the Sorcerer''s Stone', 19.99, 'Available', '1997-06-26', 1, 100),
 ('Harry Potter and the Chamber of Secrets', 20.99, 'Available', '1998-07-02', 1, 90),
 ('Harry Potter and the Prisoner of Azkaban', 21.99, 'Available', '1999-07-08', 1, 80),
@@ -251,7 +251,7 @@ INSERT INTO Books (book_name, book_price, book_status, publish_date, publisher_c
 ('New Moon', 13.99, 'Available', '2006-09-06', 37, 85),
 ('Eclipse', 14.99, 'Available', '2007-08-07', 37, 80);
 
-INSERT INTO Library (license_no, library_name, contact_no) VALUES
+INSERT IGNORE INTO Library (license_no, library_name, contact_no) VALUES
 (1, 'Central City Library', '0484-1234561'),
 (2, 'Eastside Branch Library', '0484-1234562'),
 (3, 'Westend Public Library', '0484-1234563'),
@@ -303,112 +303,112 @@ INSERT INTO Library (license_no, library_name, contact_no) VALUES
 (49, 'Redwood Library', '0484-1234609'),
 (50, 'Silver Oak Library', '0484-1234610');
 
-INSERT INTO Librarian (librarian_id, librarian_name, designation, contact_no, license_no) VALUES
-(1, 'Alice Johnson', 'Head Librarian', '0484-2000001', 1),
-(2, 'Bob Smith', 'Assistant Librarian', '0484-2000002', 2),
-(3, 'Charlie Brown', 'Senior Librarian', '0484-2000003', 3),
-(4, 'Diana Green', 'Junior Librarian', '0484-2000004', 4),
-(5, 'Eve White', 'Head Librarian', '0484-2000005', 5),
-(6, 'Frank Black', 'Assistant Librarian', '0484-2000006', 6),
-(7, 'Grace Blue', 'Senior Librarian', '0484-2000007', 7),
-(8, 'Hank Red', 'Junior Librarian', '0484-2000008', 8),
-(9, 'Ivy Yellow', 'Head Librarian', '0484-2000009', 9),
-(10, 'Jack Purple', 'Assistant Librarian', '0484-2000010', 10),
-(11, 'Karen Silver', 'Senior Librarian', '0484-2000011', 11),
-(12, 'Leo Gold', 'Junior Librarian', '0484-2000012', 12),
-(13, 'Mona Violet', 'Head Librarian', '0484-2000013', 13),
-(14, 'Nate Cyan', 'Assistant Librarian', '0484-2000014', 14),
-(15, 'Olivia Magenta', 'Senior Librarian', '0484-2000015', 15),
-(16, 'Paul Indigo', 'Junior Librarian', '0484-2000016', 16),
-(17, 'Quincy Teal', 'Head Librarian', '0484-2000017', 17),
-(18, 'Rita Lime', 'Assistant Librarian', '0484-2000018', 18),
-(19, 'Steve Navy', 'Senior Librarian', '0484-2000019', 19),
-(20, 'Tina Coral', 'Junior Librarian', '0484-2000020', 20),
-(21, 'Uma Peach', 'Head Librarian', '0484-2000021', 21),
-(22, 'Victor Olive', 'Assistant Librarian', '0484-2000022', 22),
-(23, 'Wendy Jade', 'Senior Librarian', '0484-2000023', 23),
-(24, 'Xavier Ruby', 'Junior Librarian', '0484-2000024', 24),
-(25, 'Yvonne Pearl', 'Head Librarian', '0484-2000025', 25),
-(26, 'Zachary Slate', 'Assistant Librarian', '0484-2000026', 26),
-(27, 'Amy Fern', 'Senior Librarian', '0484-2000027', 27),
-(28, 'Brian Moss', 'Junior Librarian', '0484-2000028', 28),
-(29, 'Cathy Rose', 'Head Librarian', '0484-2000029', 29),
-(30, 'David Stone', 'Assistant Librarian', '0484-2000030', 30),
-(31, 'Elena Frost', 'Senior Librarian', '0484-2000031', 31),
-(32, 'Fred Wolf', 'Junior Librarian', '0484-2000032', 32),
-(33, 'Gina Lake', 'Head Librarian', '0484-2000033', 33),
-(34, 'Henry Vale', 'Assistant Librarian', '0484-2000034', 34),
-(35, 'Isla Dawn', 'Senior Librarian', '0484-2000035', 35),
-(36, 'Jason Peak', 'Junior Librarian', '0484-2000036', 36),
-(37, 'Kara Birch', 'Head Librarian', '0484-2000037', 37),
-(38, 'Liam River', 'Assistant Librarian', '0484-2000038', 38),
-(39, 'Mia Aspen', 'Senior Librarian', '0484-2000039', 39),
-(40, 'Noah Grove', 'Junior Librarian', '0484-2000040', 40),
-(41, 'Olga Pine', 'Head Librarian', '0484-2000041', 41),
-(42, 'Peter Cedar', 'Assistant Librarian', '0484-2000042', 42),
-(43, 'Queen Maple', 'Senior Librarian', '0484-2000043', 43),
-(44, 'Robert Oak', 'Junior Librarian', '0484-2000044', 44),
-(45, 'Samantha Elm', 'Head Librarian', '0484-2000045', 45),
-(46, 'Thomas Fir', 'Assistant Librarian', '0484-2000046', 46),
-(47, 'Ursula Willow', 'Senior Librarian', '0484-2000047', 47),
-(48, 'Victor Aspen', 'Junior Librarian', '0484-2000048', 48),
-(49, 'Wanda Birch', 'Head Librarian', '0484-2000049', 49),
-(50, 'Xander Pine', 'Assistant Librarian', '0484-2000050', 50);
+INSERT IGNORE INTO Librarian (librarian_id, librarian_name, designation, contact_no, password, license_no) VALUES
+(1, 'Alice Johnson', 'Head Librarian', '0484-2000001', 'libpass1', 1),
+(2, 'Bob Smith', 'Assistant Librarian', '0484-2000002', 'libpass2', 2),
+(3, 'Charlie Brown', 'Senior Librarian', '0484-2000003', 'libpass3', 3),
+(4, 'Diana Green', 'Junior Librarian', '0484-2000004', 'libpass4', 4),
+(5, 'Eve White', 'Head Librarian', '0484-2000005', 'libpass5', 5),
+(6, 'Frank Black', 'Assistant Librarian', '0484-2000006', 'libpass6', 6),
+(7, 'Grace Blue', 'Senior Librarian', '0484-2000007', 'libpass7', 7),
+(8, 'Hank Red', 'Junior Librarian', '0484-2000008', 'libpass8', 8),
+(9, 'Ivy Yellow', 'Head Librarian', '0484-2000009', 'libpass9', 9),
+(10, 'Jack Purple', 'Assistant Librarian', '0484-2000010', 'libpass10', 10),
+(11, 'Karen Silver', 'Senior Librarian', '0484-2000011', 'libpass11', 11),
+(12, 'Leo Gold', 'Junior Librarian', '0484-2000012', 'libpass12', 12),
+(13, 'Mona Violet', 'Head Librarian', '0484-2000013', 'libpass13', 13),
+(14, 'Nate Cyan', 'Assistant Librarian', '0484-2000014', 'libpass14', 14),
+(15, 'Olivia Magenta', 'Senior Librarian', '0484-2000015', 'libpass15', 15),
+(16, 'Paul Indigo', 'Junior Librarian', '0484-2000016', 'libpass16', 16),
+(17, 'Quincy Teal', 'Head Librarian', '0484-2000017', 'libpass17', 17),
+(18, 'Rita Lime', 'Assistant Librarian', '0484-2000018', 'libpass18', 18),
+(19, 'Steve Navy', 'Senior Librarian', '0484-2000019', 'libpass19', 19),
+(20, 'Tina Coral', 'Junior Librarian', '0484-2000020', 'libpass20', 20),
+(21, 'Uma Peach', 'Head Librarian', '0484-2000021', 'libpass21', 21),
+(22, 'Victor Olive', 'Assistant Librarian', '0484-2000022', 'libpass22', 22),
+(23, 'Wendy Jade', 'Senior Librarian', '0484-2000023', 'libpass23', 23),
+(24, 'Xavier Ruby', 'Junior Librarian', '0484-2000024', 'libpass24', 24),
+(25, 'Yvonne Pearl', 'Head Librarian', '0484-2000025', 'libpass25', 25),
+(26, 'Zachary Slate', 'Assistant Librarian', '0484-2000026', 'libpass26', 26),
+(27, 'Amy Fern', 'Senior Librarian', '0484-2000027', 'libpass27', 27),
+(28, 'Brian Moss', 'Junior Librarian', '0484-2000028', 'libpass28', 28),
+(29, 'Cathy Rose', 'Head Librarian', '0484-2000029', 'libpass29', 29),
+(30, 'David Stone', 'Assistant Librarian', '0484-2000030', 'libpass30', 30),
+(31, 'Elena Frost', 'Senior Librarian', '0484-2000031', 'libpass31', 31),
+(32, 'Fred Wolf', 'Junior Librarian', '0484-2000032', 'libpass32', 32),
+(33, 'Gina Lake', 'Head Librarian', '0484-2000033', 'libpass33', 33),
+(34, 'Henry Vale', 'Assistant Librarian', '0484-2000034', 'libpass34', 34),
+(35, 'Isla Dawn', 'Senior Librarian', '0484-2000035', 'libpass35', 35),
+(36, 'Jason Peak', 'Junior Librarian', '0484-2000036', 'libpass36', 36),
+(37, 'Kara Birch', 'Head Librarian', '0484-2000037', 'libpass37', 37),
+(38, 'Liam River', 'Assistant Librarian', '0484-2000038', 'libpass38', 38),
+(39, 'Mia Aspen', 'Senior Librarian', '0484-2000039', 'libpass39', 39),
+(40, 'Noah Grove', 'Junior Librarian', '0484-2000040', 'libpass40', 40),
+(41, 'Olga Pine', 'Head Librarian', '0484-2000041', 'libpass41', 41),
+(42, 'Peter Cedar', 'Assistant Librarian', '0484-2000042', 'libpass42', 42),
+(43, 'Queen Maple', 'Senior Librarian', '0484-2000043', 'libpass43', 43),
+(44, 'Robert Oak', 'Junior Librarian', '0484-2000044', 'libpass44', 44),
+(45, 'Samantha Elm', 'Head Librarian', '0484-2000045', 'libpass45', 45),
+(46, 'Thomas Fir', 'Assistant Librarian', '0484-2000046', 'libpass46', 46),
+(47, 'Ursula Willow', 'Senior Librarian', '0484-2000047', 'libpass47', 47),
+(48, 'Victor Aspen', 'Junior Librarian', '0484-2000048', 'libpass48', 48),
+(49, 'Wanda Birch', 'Head Librarian', '0484-2000049', 'libpass49', 49),
+(50, 'Xander Pine', 'Assistant Librarian', '0484-2000050', 'libpass50', 50);
 
-INSERT INTO Member (name, address, contact_no, member_type) VALUES
-('Alice Johnson','123 Maple St, Springfield','9876543210','Regular'),
-('Bob Smith','45 Oak Ave, Rivertown','9876543211','Premium'),
-('Charlie Brown','78 Pine Rd, Lakeside','9876543212','Student'),
-('Diana White','9 Elm St, Springfield','9876543213','Regular'),
-('Ethan Davis','12 Birch Ln, Rivertown','9876543214','Premium'),
-('Fiona Clark','34 Cedar Ave, Lakeside','9876543215','Student'),
-('George Miller','56 Walnut St, Springfield','9876543216','Regular'),
-('Hannah Wilson','89 Ash Rd, Rivertown','9876543217','Premium'),
-('Ian Taylor','101 Cherry St, Lakeside','9876543218','Student'),
-('Julia Moore','202 Poplar Ave, Springfield','9876543219','Regular'),
-('Kevin Anderson','303 Spruce Rd, Rivertown','9876543220','Premium'),
-('Laura Thomas','404 Fir St, Lakeside','9876543221','Student'),
-('Michael Scott','505 Maple Ave, Springfield','9876543222','Regular'),
-('Nina Harris','606 Oak Rd, Rivertown','9876543223','Premium'),
-('Oscar Lewis','707 Pine St, Lakeside','9876543224','Student'),
-('Paula Martin','808 Elm Ave, Springfield','9876543225','Regular'),
-('Quentin Hall','909 Birch Rd, Rivertown','9876543226','Premium'),
-('Rachel Young','111 Cedar St, Lakeside','9876543227','Student'),
-('Steven King','222 Walnut Ave, Springfield','9876543228','Regular'),
-('Tina Wright','333 Ash Rd, Rivertown','9876543229','Premium'),
-('Umar Lopez','444 Cherry St, Lakeside','9876543230','Student'),
-('Victoria Hill','555 Poplar Ave, Springfield','9876543231','Regular'),
-('William Scott','666 Spruce Rd, Rivertown','9876543232','Premium'),
-('Xavier Green','777 Fir St, Lakeside','9876543233','Student'),
-('Yvonne Adams','888 Maple Ave, Springfield','9876543234','Regular'),
-('Zachary Baker','999 Oak Rd, Rivertown','9876543235','Premium'),
-('Abigail Carter','121 Pine St, Lakeside','9876543236','Student'),
-('Benjamin Evans','232 Elm Ave, Springfield','9876543237','Regular'),
-('Clara Foster','343 Birch Rd, Rivertown','9876543238','Premium'),
-('David Garcia','454 Cedar St, Lakeside','9876543239','Student'),
-('Ella Hughes','565 Walnut Ave, Springfield','9876543240','Regular'),
-('Franklin Jenkins','676 Ash Rd, Rivertown','9876543241','Premium'),
-('Grace Kelly','787 Cherry St, Lakeside','9876543242','Student'),
-('Henry Lewis','898 Poplar Ave, Springfield','9876543243','Regular'),
-('Isla Mitchell','909 Spruce Rd, Rivertown','9876543244','Premium'),
-('Jack Nelson','101 Fir St, Lakeside','9876543245','Student'),
-('Karen Ortiz','202 Maple Ave, Springfield','9876543246','Regular'),
-('Liam Perez','303 Oak Rd, Rivertown','9876543247','Premium'),
-('Mia Quinn','404 Pine St, Lakeside','9876543248','Student'),
-('Noah Roberts','505 Elm Ave, Springfield','9876543249','Regular'),
-('Olivia Sanchez','606 Birch Rd, Rivertown','9876543250','Premium'),
-('Peter Turner','707 Cedar St, Lakeside','9876543251','Student'),
-('Quinn Underwood','808 Walnut Ave, Springfield','9876543252','Regular'),
-('Rose Valdez','909 Ash Rd, Rivertown','9876543253','Premium'),
-('Samuel Walker','111 Cherry St, Lakeside','9876543254','Student'),
-('Taylor Xavier','222 Poplar Ave, Springfield','9876543255','Regular'),
-('Uma York','333 Spruce Rd, Rivertown','9876543256','Premium'),
-('Victor Zimmerman','444 Fir St, Lakeside','9876543257','Student'),
-('Wendy Allen','555 Maple Ave, Springfield','9876543258','Regular'),
-('Xander Brooks','666 Oak Rd, Rivertown','9876543259','Premium'),
-('Yara Coleman','777 Pine St, Lakeside','9876543260','Student');
 
-INSERT INTO Fine (amount, status, FineDate, member_id) VALUES
+INSERT IGNORE INTO Member (name, address, contact_no, member_type, password) VALUES
+('Alice Johnson','123 Maple St, Springfield','9876543210','Regular','pass1'),
+('Bob Smith','45 Oak Ave, Rivertown','9876543211','Premium','pass2'),
+('Charlie Brown','78 Pine Rd, Lakeside','9876543212','Student','pass3'),
+('Diana White','9 Elm St, Springfield','9876543213','Regular','pass4'),
+('Ethan Davis','12 Birch Ln, Rivertown','9876543214','Premium','pass5'),
+('Fiona Clark','34 Cedar Ave, Lakeside','9876543215','Student','pass6'),
+('George Miller','56 Walnut St, Springfield','9876543216','Regular','pass7'),
+('Hannah Wilson','89 Ash Rd, Rivertown','9876543217','Premium','pass8'),
+('Ian Taylor','101 Cherry St, Lakeside','9876543218','Student','pass9'),
+('Julia Moore','202 Poplar Ave, Springfield','9876543219','Regular','pass10'),
+('Kevin Anderson','303 Spruce Rd, Rivertown','9876543220','Premium','pass11'),
+('Laura Thomas','404 Fir St, Lakeside','9876543221','Student','pass12'),
+('Michael Scott','505 Maple Ave, Springfield','9876543222','Regular','pass13'),
+('Nina Harris','606 Oak Rd, Rivertown','9876543223','Premium','pass14'),
+('Oscar Lewis','707 Pine St, Lakeside','9876543224','Student','pass15'),
+('Paula Martin','808 Elm Ave, Springfield','9876543225','Regular','pass16'),
+('Quentin Hall','909 Birch Rd, Rivertown','9876543226','Premium','pass17'),
+('Rachel Young','111 Cedar St, Lakeside','9876543227','Student','pass18'),
+('Steven King','222 Walnut Ave, Springfield','9876543228','Regular','pass19'),
+('Tina Wright','333 Ash Rd, Rivertown','9876543229','Premium','pass20'),
+('Umar Lopez','444 Cherry St, Lakeside','9876543230','Student','pass21'),
+('Victoria Hill','555 Poplar Ave, Springfield','9876543231','Regular','pass22'),
+('William Scott','666 Spruce Rd, Rivertown','9876543232','Premium','pass23'),
+('Xavier Green','777 Fir St, Lakeside','9876543233','Student','pass24'),
+('Yvonne Adams','888 Maple Ave, Springfield','9876543234','Regular','pass25'),
+('Zachary Baker','999 Oak Rd, Rivertown','9876543235','Premium','pass26'),
+('Abigail Carter','121 Pine St, Lakeside','9876543236','Student','pass27'),
+('Benjamin Evans','232 Elm Ave, Springfield','9876543237','Regular','pass28'),
+('Clara Foster','343 Birch Rd, Rivertown','9876543238','Premium','pass29'),
+('David Garcia','454 Cedar St, Lakeside','9876543239','Student','pass30'),
+('Ella Hughes','565 Walnut Ave, Springfield','9876543240','Regular','pass31'),
+('Franklin Jenkins','676 Ash Rd, Rivertown','9876543241','Premium','pass32'),
+('Grace Kelly','787 Cherry St, Lakeside','9876543242','Student','pass33'),
+('Henry Lewis','898 Poplar Ave, Springfield','9876543243','Regular','pass34'),
+('Isla Mitchell','909 Spruce Rd, Rivertown','9876543244','Premium','pass35'),
+('Jack Nelson','101 Fir St, Lakeside','9876543245','Student','pass36'),
+('Karen Ortiz','202 Maple Ave, Springfield','9876543246','Regular','pass37'),
+('Liam Perez','303 Oak Rd, Rivertown','9876543247','Premium','pass38'),
+('Mia Quinn','404 Pine St, Lakeside','9876543248','Student','pass39'),
+('Noah Roberts','505 Elm Ave, Springfield','9876543249','Regular','pass40'),
+('Olivia Sanchez','606 Birch Rd, Rivertown','9876543250','Premium','pass41'),
+('Peter Turner','707 Cedar St, Lakeside','9876543251','Student','pass42'),
+('Quinn Underwood','808 Walnut Ave, Springfield','9876543252','Regular','pass43'),
+('Rose Valdez','909 Ash Rd, Rivertown','9876543253','Premium','pass44'),
+('Samuel Walker','111 Cherry St, Lakeside','9876543254','Student','pass45'),
+('Taylor Xavier','222 Poplar Ave, Springfield','9876543255','Regular','pass46'),
+('Uma York','333 Spruce Rd, Rivertown','9876543256','Premium','pass47'),
+('Victor Zimmerman','444 Fir St, Lakeside','9876543257','Student','pass48'),
+('Wendy Allen','555 Maple Ave, Springfield','9876543258','Regular','pass49'),
+('Xander Brooks','666 Oak Rd, Rivertown','9876543259','Premium','pass50');
+
+INSERT IGNORE INTO Fine (amount, status, FineDate, member_id) VALUES
 (50.00, 'Paid', '2025-01-05', 1),
 (75.00, 'Unpaid', '2025-02-12', 2),
 (30.00, 'Paid', '2025-03-08', 3),
@@ -461,7 +461,7 @@ INSERT INTO Fine (amount, status, FineDate, member_id) VALUES
 (50.00, 'Unpaid', '2025-02-10', 50);
 
 
-INSERT INTO WrittenBy (book_id, author_id) VALUES
+INSERT IGNORE INTO WrittenBy (book_id, author_id) VALUES
 (1, 1),
 (2, 2),
 (3, 3),
@@ -513,7 +513,7 @@ INSERT INTO WrittenBy (book_id, author_id) VALUES
 (49, 9),
 (50, 10);
 
-INSERT INTO IssuedBy (librarian_id, book_id) VALUES
+INSERT IGNORE INTO IssuedBy (librarian_id, book_id) VALUES
 (1, 1),
 (1, 2),
 (1, 3),
@@ -565,7 +565,7 @@ INSERT INTO IssuedBy (librarian_id, book_id) VALUES
 (7, 49),
 (7, 50);
 
-INSERT INTO Borrows (member_id, book_id, borrow_date, return_date) VALUES
+INSERT IGNORE INTO Borrows (member_id, book_id, borrow_date, return_date) VALUES
 (1, 1, '2025-01-05', '2025-01-20'),
 (2, 2, '2025-01-08', '2025-01-25'),
 (3, 3, '2025-01-10', '2025-01-22'),
@@ -617,54 +617,55 @@ INSERT INTO Borrows (member_id, book_id, borrow_date, return_date) VALUES
 (49, 49, '2025-05-03', '2025-05-25'),
 (50, 50, '2025-05-05', '2025-05-28');
 
-INSERT INTO ManagesFine (librarian_id, fine_id) VALUES
-(1, 51),
-(2, 52),
-(3, 53),
-(4, 54),
-(5, 55),
-(6, 56),
-(7, 57),
-(8, 58),
-(9, 59),
-(10, 60),
-(1, 61),
-(2, 62),
-(3, 63),
-(4, 64),
-(5, 65),
-(6, 66),
-(7, 67),
-(8, 68),
-(9, 69),
-(10, 70),
-(1, 71),
-(2, 72),
-(3, 73),
-(4, 74),
-(5, 75),
-(6, 76),
-(7, 77),
-(8, 78),
-(9, 79),
-(10, 80),
-(1, 81),
-(2, 82),
-(3, 83),
-(4, 84),
-(5, 85),
-(6, 86),
-(7, 87),
-(8, 88),
-(9, 89),
-(10, 90),
-(1, 91),
-(2, 92),
-(3, 93),
-(4, 94),
-(5, 95),
-(6, 96),
-(7, 97),
-(8, 98),
-(9, 99),
-(10, 100);
+INSERT IGNORE INTO ManagesFine (librarian_id, fine_id) VALUES
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5),
+(6, 6),
+(7, 7),
+(8, 8),
+(9, 9),
+(10, 10),
+(1, 11),
+(2, 12),
+(3, 13),
+(4, 14),
+(5, 15),
+(6, 16),
+(7, 17),
+(8, 18),
+(9, 19),
+(10, 20),
+(1, 21),
+(2, 22),
+(3, 23),
+(4, 24),
+(5, 25),
+(6, 26),
+(7, 27),
+(8, 28),
+(9, 29),
+(10, 30),
+(1, 31),
+(2, 32),
+(3, 33),
+(4, 34),
+(5, 35),
+(6, 36),
+(7, 37),
+(8, 38),
+(9, 39),
+(10, 40),
+(1, 41),
+(2, 42),
+(3, 43),
+(4, 44),
+(5, 45),
+(6, 46),
+(7, 47),
+(8, 48),
+(9, 49),
+(10, 50);
+
