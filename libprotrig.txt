@@ -1,81 +1,146 @@
+
+
 DELIMITER //
+
+DROP PROCEDURE IF EXISTS display_member;
+
 CREATE PROCEDURE display_member(
-    IN userID INT,IN password VARCHAR(20),OUT name VARCHAR(20),OUT address VARCHAR(20),OUT contactno INT,    OUT membertype VARCHAR(20),OUT bookid INT,OUT borrowdate DATETIME,OUT returndate DATETIME,OUT fine_id INT, OUT amount DECIMAL(10,2),OUT status VARCHAR(20),OUT FineDate DATETIME)
+    IN in_userID INT,
+    IN in_password VARCHAR(20)
+)
 BEGIN
-    SELECT name, address, contact_no, member_type INTO name, address, contactno, membertype FROM Members WHERE member_id = userID;
+    DECLARE db_password VARCHAR(20);
 
-    SELECT book_id, borrow_date, return_date INTO bookid, borrowdate, returndate FROM Borrows WHERE member_id = userID;
+    -- Get the password from the database
+    SELECT password INTO db_password 
+    FROM Members 
+    WHERE member_id = in_userID;
 
-    SELECT fine_id, amount, status,FineDate INTO fine_id, amount, status FROM Fines WHERE member_id = userID;
-END //
+    -- Check password
+    IF db_password = in_password THEN
+        -- Display member info
+        SELECT name, address, contact_no, member_type 
+        FROM Members 
+        WHERE member_id = in_userID;
+
+        -- Display borrowed books
+        SELECT book_id, borrow_date, return_date 
+        FROM Borrows 
+        WHERE member_id = in_userID;
+
+        -- Display fines
+        SELECT fine_id, amount, status, FineDate 
+        FROM Fines 
+        WHERE member_id = in_userID;
+    ELSE
+        SELECT 'Incorrect password' AS message;
+    END IF;
+END;
+//
 
 
-CREATE PROCEDURE display_librarian(IN userID INT, IN password VARCHAR(20),OUT book_id INT,OUT book_name VARCHAR(20),OUT book_price DECIMAL(10,2),OUT book_status VARCHAR(20), OUT publish_date DATETIME,OUT publisher_code INT,OUT No_of_Stock INT, OUT name VARCHAR(20),OUT address VARCHAR(20),OUT contactno INT,OUT membertype VARCHAR(20))
+DROP PROCEDURE IF EXISTS display_librarian;
+CREATE PROCEDURE display_librarian  (IN userID INT, IN password VARCHAR(20),OUT book_id INT,OUT book_name VARCHAR(20),OUT book_price DECIMAL(10,2),OUT book_status VARCHAR(20), OUT publish_date DATETIME,OUT publisher_code INT,OUT No_of_Stock INT, OUT name VARCHAR(20),OUT address VARCHAR(20),OUT contactno INT,OUT membertype VARCHAR(20))
 BEGIN 
-    SELECT book_id INTO book_id FROM IssuedBy WHERE librarian_id = userID;
-    SELECT book_name, book_price, book_status, publish_date, publisher_code , No_of_Stock INTO book_name, book_price, book_status, publish_date, publisher_code No_of_StockFROM Books WHERE book_id = book_id;
-    SELECT member_id INTO member_id FROM Fines WHERE fine_id = fine_id;
+	DECLARE PASSWORD VARCHAR(20);
+	SELECT password INTO PASSWORD FROM librarian WHERE librarian_id=userID;
+	IF PASSWORD=password THEN
+    	SELECT book_id INTO book_id FROM IssuedBy WHERE librarian_id = userID;
+    	SELECT book_name, book_price, book_status, publish_date, publisher_code , No_of_Stock INTO book_name, book_price, book_status, publish_date, publisher_code,No_of_Stock FROM Books WHERE book_id = book_id;
+    	SELECT member_id INTO member_id FROM Fines WHERE fine_id = fine_id;
 
-    SELECT name, address, contact_no, member_type INTO name, address, contactno, membertype FROM Members WHERE member_id = member_id;
-END //
+    	SELECT name, address, contact_no, member_type INTO name, address, contactno, membertype FROM Members WHERE member_id = member_id;
+    ELSE
+     SELECT 'Incorrect password' AS message;
+    END IF;
+END;
+//
 
-
-CREATE PROCEDURE new_member(
-    IN name_new VARCHAR(20),IN address_new VARCHAR(20), IN contactNO_new INT, IN member_type_new VARCHAR(20))
+DROP PROCEDURE IF EXISTS new_member;
+CREATE PROCEDURE new_member  (
+    IN name_new VARCHAR(20),IN address_new VARCHAR(20), IN contactNO_new INT, IN member_type_new VARCHAR(20), IN password_new VARCHAR(20))
 BEGIN
-    INSERT INTO Members (name, address, contact_no, member_type) VALUES (name_new, address_new, contactNO_new, member_type_new);
-END //
-
-CREATE PROCEDURE remove_member()
+    INSERT INTO Members (name, address, contact_no, member_type,password) VALUES (name_new, address_new, contactNO_new, member_type_new, password_new );
+END;
+//
+DROP PROCEDURE IF EXISTS remove_member;
+CREATE PROCEDURE remove_member  ()
 BEGIN 
     DELETE FROM Members WHERE member_id IN (SELECT member_id FROM Fines
         WHERE FineDate < DATE_SUB(CURDATE(), INTERVAL 1 MONTH));
-END //
+END;
+//
 
-
-CREATE PROCEDURE add_book(IN book_name_new VARCHAR(20), IN book_price_new DECIMAL(10,2), IN book_status_new VARCHAR(20), IN publish_date_new DATETIME, IN publisher_code_new INT,IN No_of_Stock_new INT)
+DROP PROCEDURE IF EXISTS add_book;
+CREATE PROCEDURE add_book  (IN book_name_new VARCHAR(20), IN book_price_new DECIMAL(10,2), IN book_status_new VARCHAR(20), IN publish_date_new DATETIME, IN publisher_code_new INT,IN No_of_Stock_new INT)
 BEGIN
     INSERT INTO Books (book_name, book_price, book_status, publish_date, publisher_code,No_of_Stock)VALUES (book_name_new, book_price_new, book_status_new, publish_date_new, publisher_code_new,No_of_Stock_new);
-END //
+END;
+//
 
-
+DROP PROCEDURE IF EXISTS display_books;
 CREATE PROCEDURE display_books()
 BEGIN 
     SELECT * FROM Books;
-END //
+END;
+//
 
+DELIMITER //
 
-CREATE PROCEDURE take_book(IN bookname VARCHAR(20), IN authorname VARCHAR(20),IN librarianid INT, IN memberid INT)
+DROP PROCEDURE IF EXISTS take_book;
+
+CREATE PROCEDURE take_book(
+    IN bookname VARCHAR(100),
+    IN authorname VARCHAR(100),
+    IN librarianid INT,
+    IN memberid INT
+)
 BEGIN
     DECLARE count_var INT;
-    SELECT No_of_Stock INTO count_var FROM Books WHERE book_name = bookname AND author_name = authorname;
+
+    -- Get current stock count
+    SELECT No_of_Stock 
+    INTO count_var 
+    FROM Books 
+    WHERE book_name = bookname AND author_name = authorname;
+
+    -- Check stock availability
     IF count_var <= 0 THEN
         SELECT 'Book Out Of Stock!!!' AS message;
     ELSE
+        -- Update stock
         UPDATE Books
         SET No_of_Stock = No_of_Stock - 1
         WHERE book_name = bookname AND author_name = authorname;
 
+        -- Confirmation message
         SELECT 'Book count updated successfully!' AS message;
 
-        INSERT INTO IssuedBy (librarian_id, book_id)VALUES (librarianid, (SELECT book_id FROM Books WHERE book_name = bookname AND author_name = authorname));
+        -- Record librarian-book issue
+        INSERT INTO IssuedBy (librarian_id, book_id)
+        VALUES (librarianid, (SELECT book_id FROM Books WHERE book_name = bookname AND author_name = authorname));
 
-        INSERT INTO Borrows (member_id, book_id, borrow_date)VALUES (memberid, (SELECT book_id FROM Books WHERE book_name = bookname AND author_name = authorname), NOW());
+        -- Record member borrow
+        INSERT INTO Borrows (member_id, book_id, borrow_date)
+        VALUES (memberid, (SELECT book_id FROM Books WHERE book_name = bookname AND author_name = authorname), NOW());
     END IF;
-END //
+END;
+//
 
 
-CREATE PROCEDURE chk_fine()
+DROP PROCEDURE IF EXISTS  chk_fine  ;
+CREATE PROCEDURE chk_fine ()
 BEGIN
     INSERT INTO Fines (member_id, borrow_id, amount, status, FineDate)
     SELECT b.member_id, b.borrow_id, 50, 'Unpaid', CURDATE()
     FROM Borrows b
     WHERE DATEDIFF(CURDATE(), b.borrow_date) > 30
       AND b.borrow_id NOT IN (SELECT borrow_id FROM Fines);
-END //
+END;
+//
 
-
-CREATE PROCEDURE return_book(IN memberid INT, IN bookid INT)
+DROP PROCEDURE IF EXISTS  return_book;
+CREATE PROCEDURE return_book (IN memberid INT, IN bookid INT)
 BEGIN
     UPDATE Borrows
     SET return_date = CURDATE()  WHERE member_id = memberid AND book_id = bookid;
@@ -83,47 +148,50 @@ BEGIN
     SET No_of_Stock = No_of_Stock + 1  WHERE book_id = bookid;
 
     SELECT 'Book Returned Successfully!' AS message;
-END //
+END;
+//
 
 
-
-DELIMITER //
-
-CREATE PROCEDURE pay_fine(IN memberid INT, IN fine_id INT)
+DROP PROCEDURE IF EXISTS  pay_fine  ;
+CREATE PROCEDURE pay_fine (IN memberid INT, IN fine_id INT)
 BEGIN
     UPDATE Fines
     SET status = 'Paid' WHERE member_id = memberid AND fine_id = fine_id;
 
     SELECT 'Fine Payment Successful!' AS message;
-END //
+END;
+//
 
-
-CREATE PROCEDURE display_fines()
+DROP PROCEDURE IF EXISTS display_fines  ;
+CREATE PROCEDURE display_fines ()
 BEGIN
     SELECT fine_id, member_id, amount,FineDate, status FROM Fines WHERE status = 'Unpaid';
-END //
+END;
+//
 
-
-CREATE TRIGGER auto_fine_after_return
+DROP TRIGGER IF EXISTS auto_fine_after_return; 
+CREATE TRIGGER auto_fine_after_return  
 AFTER UPDATE ON Borrows
 FOR EACH ROW
 BEGIN
     IF (NEW.return_date IS NOT NULL) AND (DATEDIFF(NEW.return_date, NEW.borrow_date) > 30) THEN
-        INSERT INTO Fines (member_id, borrow_id, amount, status, FineDate) VALUES (NEW.member_id, NEW.borrow_id, 50, 'Unpaid', CURDATE());
+        INSERT INTO Fines ( amount, status, FineDate,member_id) VALUES ( 50, 'Unpaid', CURDATE(),NEW.member_id);
     END IF;
-END //
+END;
+//
 
-
-CREATE TRIGGER after_borrow_insert
+DROP TRIGGER IF EXISTS after_borrow_insert; 
+CREATE TRIGGER after_borrow_insert 
 AFTER INSERT ON Borrows
 FOR EACH ROW
 BEGIN
     UPDATE Books
     SET No_of_Stock = No_of_Stock - 1 WHERE book_id = NEW.book_id;
-END //
+END;
+//
 
-
-CREATE TRIGGER after_return_update
+DROP TRIGGER IF EXISTS after_return_update;
+CREATE TRIGGER after_return_update 
 AFTER UPDATE ON Borrows
 FOR EACH ROW
 BEGIN
@@ -131,20 +199,22 @@ BEGIN
         UPDATE Books
         SET No_of_Stock = No_of_Stock + 1 WHERE book_id = NEW.book_id;
     END IF;
-END //
+END;
+//
 
-CREATE PROCEDURE display_authors()
+DROP PROCEDURE IF EXISTS  display_author  ;
+CREATE PROCEDURE display_author  ()
 BEGIN
      SELECT author_id,author_name,author_genre,author_details,awards FROM author;
-END//
+END;
+//
 
 
-
-CREATE EVENT daily_fine_check
+DROP EVENT IF EXISTS daily_fine_check;
+CREATE EVENT daily_fine_check  
 ON SCHEDULE EVERY 1 DAY
 DO
 CALL check_fines();
 
 
 DELIMITER ;
-
