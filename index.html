@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Login</title>
+    <link rel="stylesheet" href="log.css">
+</head>
+<body>
+    <div class="login">
+        <form action="login.php" method="post">
+            <h1>LOG IN</h1>
+
+            <div class="role-selection">
+                <label>
+                    <input type="radio" name="role" value="member" required> Member
+                </label>
+                <label>
+                    <input type="radio" name="role" value="librarian" required> Librarian
+                </label>
+            </div>
+
+            <label for="username">Member ID / Librarian ID:</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <button type="submit">Login</button>
+
+            <h4>Don't have an account? <a href="signup.php" class="signupbtn">Sign Up</a></h4>
+
+        </form>
+    </div>
+</body>
+</html>
